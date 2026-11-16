@@ -1,21 +1,10 @@
 @echo off
-chcp 65001 > nul
+cd /d "%~dp0"
+title DobroDelo Server
 echo ========================================================
-echo  Запуск сервиса «ДоброДело» (Платформа волонтерства)
+echo  DobroDelo Server - http://127.0.0.1:5000
+echo  Database: PostgreSQL (dobrodelo)
 echo ========================================================
 echo.
-if not exist "venv\Scripts\activate.bat" (
-    echo [ОШИБКА] Виртуальное окружение venv не найдено!
-    pause
-    exit /b
-)
-
-call venv\Scripts\activate.bat
-
-echo База данных: PostgreSQL (dobrodelo)
-echo.
-echo Сервер запускается по адресу: http://127.0.0.1:5000
-echo Для остановки нажмите Ctrl + C
-echo.
-python run.py
-pause
+"%~dp0venv\Scripts\python.exe" "%~dp0run.py"
+if errorlevel 1 pause
