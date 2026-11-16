@@ -12,14 +12,7 @@ if not exist "venv\Scripts\activate.bat" (
 
 call venv\Scripts\activate.bat
 
-echo Проверка базы данных...
-if not exist "instance\app.db" (
-    if not exist "app.db" (
-        echo База данных не обнаружена. Заполняем демонстрационными данными...
-        python seed_data.py
-    )
-)
-
+echo База данных: PostgreSQL (dobrodelo)
 echo.
 echo Сервер запускается по адресу: http://127.0.0.1:5000
 echo Для остановки нажмите Ctrl + C
