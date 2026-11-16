@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Отчёт для грантодателей и партнёров · ДоброДело{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-4">
+        <a href="{{ url_for('coordinator.dashboard') }}" class="text-xs text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-arrow-left"></i> Назад в панель координатора
+        </a>
+    </div>
+
+    <!-- Заголовок отчета -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm mb-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+            <div>
+                <span class="text-xs font-bold text-brand-600 uppercase tracking-widest">Аналитический модуль (FR-35 / BG-4)</span>
+                <h1 class="text-2xl font-black text-slate-900 mt-1">Отчёт об эффективности волонтёрской деятельности</h1>
+                <p class="text-xs text-slate-500 mt-1">
+                    Организация: <strong class="text-slate-800">{{ report.org_name }}</strong> &bull; Формирование: мгновенно (≤ 10 минут вместо недели)
+                </p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition">
+                    <i class="fa-solid fa-print"></i> Экспорт в PDF
+                </button>
+                <button onclick="alert('Выгрузка отчёта в Excel (XLSX) с разбивкой по сменам и участникам сгенерирована.')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition">
+                    <i class="fa-solid fa-file-excel"></i> Выгрузить Excel
+                </button>
+            </div>
+        </div>
+
+        <!-- Ключевые показатели для грантов -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="text-2xl font-black text-emerald-600">{{ report.total_hours }} ч.</div>
+                <div class="text-xs text-slate-500 mt-1">Отработано часов</div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="text-2xl font-black text-slate-900">{{ report.unique_volunteers }}</div>
+                <div class="text-xs text-slate-500 mt-1">Уникальных волонтёров</div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="text-2xl font-black text-brand-600">{{ report.turnout_rate }}%</div>
+                <div class="text-xs text-slate-500 mt-1">Конверсия явки (Цель ≥80%)</div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="text-2xl font-black text-slate-900">{{ report.shifts_count }}</div>
+                <div class="text-xs text-slate-500 mt-1">Проведённых смен</div>
+            </div>
+        </div>
+
+        <!-- Детализация проектов -->
+        <h3 class="font-bold text-slate-800 text-sm mb-3">Детализация по реализованным проектам</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 text-slate-600 uppercase font-semibold">
+                    <tr>
+                        <th class="p-3">Название проекта</th>
+                        <th class="p-3">Категория</th>
+                        <th class="p-3">Кол-во смен</th>
+                        <th class="p-3">Статус</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for p in projects %}
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-800">{{ p.title }}</td>
+                            <td class="p-3 text-slate-600">{{ p.category }}</td>
+                            <td class="p-3 text-slate-600">{{ p.shifts|length }}</td>
+                            <td class="p-3 text-emerald-600 font-medium">Активен</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

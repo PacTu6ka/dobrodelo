@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет волонтёра · ДоброДело{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Шапка профиля -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold text-slate-900">{{ current_user.full_name }}</h1>
+                {% if current_user.is_minor %}
+                    <span class="text-xs bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full border border-amber-200 font-medium">
+                        Участник 14–17 лет (152-ФЗ)
+                    </span>
+                {% else %}
+                    <span class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 font-medium">
+                        Совершеннолетний
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                <i class="fa-solid fa-envelope"></i> {{ current_user.email }} &bull;
+                <i class="fa-solid fa-city"></i> {{ current_user.city }} &bull;
+                <i class="fa-solid fa-cake-candles"></i> Возраст: {{ current_user.age }} лет
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('volunteer.certificate') }}" class="px-4 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-xl text-xs font-semibold flex items-center gap-2 transition">
+                <i class="fa-solid fa-award"></i> Электронный сертификат (PDF)
+            </a>
+            <a href="{{ url_for('main.catalog') }}" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                Найти новую смену
+            </a>
+        </div>
+    </div>
+
+    <!-- Метрики волонтёра (FR-28, FR-29) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-black text-slate-900">{{ total_hours }} ч.</div>
+                <div class="text-xs text-slate-500">Подтвержденные часы</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-black text-slate-900">{{ attended_count }}</div>
+                <div class="text-xs text-slate-500">Завершенных смен</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-black text-slate-900">{{ applications|length }}</div>
+                <div class="text-xs text-slate-500">Всего заявок</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список моих заявок на смены (FR-13, FR-15) -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-900">История смен и статус участия</h2>
+            <span class="text-xs text-slate-400">Автоматический учет явки</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-6">Проект</th>
+                        <th class="py-3.5 px-4">Дата и время</th>
+                        <th class="py-3.5 px-4">Организация</th>
+                        <th class="py-3.5 px-4">Статус</th>
+                        <th class="py-3.5 px-4">Часы</th>
+                        <th class="py-3.5 px-6 text-right">Действие</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for app in applications %}
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="py-4 px-6 font-semibold text-slate-800">
+                                <a href="{{ url_for('main.project_detail', project_id=app.shift.project_id) }}" class="hover:text-brand-600">
+                                    {{ app.shift.project.title }}
+                                </a>
+                            </td>
+                            <td class="py-4 px-4 text-xs text-slate-600 whitespace-nowrap">
+                                <div>{{ app.shift.date.strftime('%d.%m.%Y') }}</div>
+                                <div class="text-slate-400">{{ app.shift.start_time }} – {{ app.shift.end_time }}</div>
+                            </td>
+                            <td class="py-4 px-4 text-xs text-slate-600">
+                                {{ app.shift.project.organization.name }}
+                            </td>
+                            <td class="py-4 px-4 text-xs">
+                                {% if app.status == 'pending' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200">На рассмотрении</span>
+                                {% elif app.status == 'approved' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">Одобрено</span>
+                                {% elif app.status == 'attended' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200"><i class="fa-solid fa-check"></i> Явка подтверждена</span>
+                                {% elif app.status == 'no_show' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-medium border border-rose-200">Не явился</span>
+                                {% elif app.status == 'cancelled' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 font-medium">Отменено</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">{{ app.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-4 text-xs font-bold text-slate-800">
+                                {% if app.status == 'attended' %}
+                                    <span class="text-emerald-600">+{{ app.hours_awarded }} ч.</span>
+                                {% else %}
+                                    <span class="text-slate-400">{{ app.shift.hours }} ч.</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6 text-right text-xs">
+                                {% if app.status in ['pending', 'approved'] %}
+                                    <form method="POST" action="{{ url_for('volunteer.cancel_application', app_id=app.id) }}" onsubmit="return confirm('Вы уверены, что хотите отменить запись?');">
+                                        <button type="submit" class="text-rose-600 hover:text-rose-800 font-medium">
+                                            Отменить запись
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-slate-300">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-400 text-xs">
+                                У вас пока нет записей на волонтерские смены. <a href="{{ url_for('main.catalog') }}" class="text-brand-600 font-semibold hover:underline">Выбрать проект в каталоге</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

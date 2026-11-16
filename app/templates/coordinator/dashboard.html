@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Панель координатора НКО · ДоброДело{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Шапка организации -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold text-slate-900">{{ org.name if org else 'Ваша организация' }}</h1>
+                {% if org and org.is_verified %}
+                    <span class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 font-medium">
+                        <i class="fa-solid fa-circle-check"></i> Верифицирована модератором
+                    </span>
+                {% else %}
+                    <span class="text-xs bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full border border-amber-200 font-medium">
+                        <i class="fa-solid fa-clock"></i> На проверке у модератора
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Координатор: {{ current_user.full_name }} &bull; Город: {{ org.city if org else current_user.city }}
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('coordinator.create_project') }}" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-plus"></i> Создать новый проект
+            </a>
+            <a href="{{ url_for('coordinator.reports') }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition">
+                <i class="fa-solid fa-chart-pie"></i> Отчеты для грантов
+            </a>
+        </div>
+    </div>
+
+    <!-- Метрики организации (BG-1, BG-2) -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-2xl font-black text-slate-900">{{ projects|length }}</div>
+            <div class="text-xs text-slate-500 mt-1">Активных проектов</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-2xl font-black text-slate-900">{{ total_shifts }}</div>
+            <div class="text-xs text-slate-500 mt-1">Запланировано смен</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-2xl font-black text-slate-900">{{ total_applications }}</div>
+            <div class="text-xs text-slate-500 mt-1">Всего заявок волонтёров</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-2xl font-black text-amber-600">{{ pending_applications }}</div>
+            <div class="text-xs text-slate-500 mt-1">Заявок ждут подтверждения</div>
+        </div>
+    </div>
+
+    <!-- Список проектов и смен -->
+    <div class="space-y-6">
+        <h2 class="text-xl font-bold text-slate-900">Проекты и смены организации</h2>
+
+        {% for project in projects %}
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold">{{ project.category }}</span>
+                            <span class="text-xs text-slate-400">&bull; {{ project.city }}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mt-1">{{ project.title }}</h3>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="{{ url_for('coordinator.create_shift', project_id=project.id) }}" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Добавить смену
+                        </a>
+                        <a href="{{ url_for('main.project_detail', project_id=project.id) }}" target="_blank" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg transition">
+                            Просмотр в каталоге <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Смены проекта -->
+                <div class="mt-4 border-t border-slate-100 pt-4">
+                    <div class="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Смены этого проекта:</div>
+                    {% if project.shifts %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {% for shift in project.shifts %}
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex justify-between items-center text-xs font-semibold text-slate-800">
+                                            <span>{{ shift.date.strftime('%d.%m.%Y') }} ({{ shift.start_time }}-{{ shift.end_time }})</span>
+                                            <span class="text-emerald-700">{{ shift.hours }} ч.</span>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 mt-1">
+                                            Записано: <strong class="text-slate-800">{{ shift.applications|length }}</strong> / {{ shift.max_volunteers }} мест
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200/60">
+                                        <a href="{{ url_for('coordinator.shift_applications', shift_id=shift.id) }}" class="flex-1 text-center py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium rounded-lg transition">
+                                            Заявки ({{ shift.applications|length }})
+                                        </a>
+                                        <a href="{{ url_for('coordinator.shift_attendance', shift_id=shift.id) }}" class="flex-1 text-center py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg transition">
+                                            Отметить явку
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-slate-400 italic">Смен пока нет. Добавьте первую смену, чтобы волонтеры могли записываться.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white rounded-2xl p-12 text-center border border-slate-200 text-slate-500">
+                <i class="fa-solid fa-clipboard-list text-4xl text-slate-300 mb-3"></i>
+                <h3 class="font-bold text-slate-800">У вашей организации пока нет проектов</h3>
+                <p class="text-xs text-slate-400 mt-1 mb-4">Создайте свой первый проект за 2 минуты</p>
+                <a href="{{ url_for('coordinator.create_project') }}" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+                    Создать проект
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

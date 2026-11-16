@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Заявки на смену · ДоброДело{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-4">
+        <a href="{{ url_for('coordinator.dashboard') }}" class="text-xs text-slate-500 hover:text-slate-800">
+            <i class="fa-solid fa-arrow-left"></i> Назад в панель координатора
+        </a>
+    </div>
+
+    <!-- Заголовок смены -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <span class="text-xs font-semibold text-brand-600 uppercase">{{ shift.project.title }}</span>
+            <h1 class="text-2xl font-bold text-slate-900 mt-1">Заявки волонтёров на смену</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Дата: <strong class="text-slate-700">{{ shift.date.strftime('%d.%m.%Y') }}</strong> ({{ shift.start_time }} – {{ shift.end_time }}) &bull;
+                Лимит: {{ shift.approved_count }} / {{ shift.max_volunteers }} мест
+            </p>
+        </div>
+
+        <a href="{{ url_for('coordinator.shift_attendance', shift_id=shift.id) }}" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-user"></i> Перейти к отметке явки
+        </a>
+    </div>
+
+    <!-- Таблица заявок -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-base font-bold text-slate-900">Список кандидатов (FR-18)</h2>
+            <span class="text-xs text-slate-400">Всего заявок: {{ applications|length }}</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                        <th class="py-3.5 px-6">Волонтёр</th>
+                        <th class="py-3.5 px-4">Возраст / Согласие</th>
+                        <th class="py-3.5 px-4">Контакты</th>
+                        <th class="py-3.5 px-4">Текущий статус</th>
+                        <th class="py-3.5 px-6 text-right">Управление заявкой</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for app in applications %}
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="py-4 px-6 font-semibold text-slate-800">
+                                {{ app.volunteer.full_name }}
+                            </td>
+                            <td class="py-4 px-4 text-xs">
+                                <div>{{ app.volunteer.age }} лет</div>
+                                {% if app.volunteer.is_minor %}
+                                    {% if app.parent_consent_given %}
+                                        <span class="text-[10px] text-emerald-600 font-medium"><i class="fa-solid fa-check"></i> Согласие получено</span>
+                                    {% else %}
+                                        <span class="text-[10px] text-rose-600 font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Без согласия</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-[10px] text-slate-400">Взрослый</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-4 text-xs text-slate-600">
+                                <div>{{ app.volunteer.email }}</div>
+                                <div class="text-slate-400">{{ app.volunteer.phone or 'Телефон не указан' }}</div>
+                            </td>
+                            <td class="py-4 px-4 text-xs">
+                                {% if app.status == 'pending' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200">Ожидает решения</span>
+                                {% elif app.status == 'approved' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">Одобрен на смену</span>
+                                {% elif app.status == 'rejected' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-medium border border-rose-200">Отклонён</span>
+                                {% elif app.status == 'attended' %}
+                                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">Явка зачтена ({{ app.hours_awarded }} ч.)</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">{{ app.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6 text-right text-xs">
+                                {% if app.status == 'pending' %}
+                                    <div class="flex items-center justify-end gap-2">
+                                        <form method="POST" action="{{ url_for('coordinator.update_application_status', app_id=app.id, new_status='approved') }}">
+                                            <button type="submit" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-semibold transition">
+                                                Одобрить
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('coordinator.update_application_status', app_id=app.id, new_status='rejected') }}">
+                                            <button type="submit" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg font-medium transition">
+                                                Отклонить
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="text-slate-400">Решение принято</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-400 text-xs">
+                                На данную смену пока никто не записался.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

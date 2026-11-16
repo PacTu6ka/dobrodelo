@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ДоброДело · Платформа волонтерских проектов{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Навигация -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Логотип -->
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('main.index') }}" class="flex items-center gap-2 text-brand-600 font-bold text-xl tracking-tight">
+                        <span class="w-10 h-10 rounded-xl bg-brand-500 text-white flex items-center justify-center text-lg shadow-sm">
+                            <i class="fa-solid fa-hand-holding-heart"></i>
+                        </span>
+                        <span>ДоброДело</span>
+                    </a>
+                    <span class="hidden md:inline-block text-xs bg-brand-50 text-brand-700 px-2.5 py-1 rounded-full font-medium border border-brand-200">
+                        Региональный центр добровольчества
+                    </span>
+                </div>
+
+                <!-- Главные ссылки -->
+                <nav class="hidden md:flex items-center gap-6">
+                    <a href="{{ url_for('main.catalog') }}" class="text-sm font-medium text-slate-600 hover:text-brand-600 transition">
+                        Каталог проектов
+                    </a>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'volunteer' %}
+                            <a href="{{ url_for('volunteer.dashboard') }}" class="text-sm font-medium text-slate-600 hover:text-brand-600 transition">
+                                Мои смены и часы
+                            </a>
+                        {% elif current_user.role in ['coordinator', 'admin'] %}
+                            <a href="{{ url_for('coordinator.dashboard') }}" class="text-sm font-medium text-slate-600 hover:text-brand-600 transition">
+                                Панель координатора
+                            </a>
+                            <a href="{{ url_for('coordinator.reports') }}" class="text-sm font-medium text-slate-600 hover:text-brand-600 transition">
+                                Отчеты для грантов
+                            </a>
+                        {% endif %}
+                        {% if current_user.role == 'admin' %}
+                            <a href="{{ url_for('admin.dashboard') }}" class="text-sm font-medium text-purple-600 hover:text-purple-700 transition">
+                                Модерация
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </nav>
+
+                <!-- Авторизация / Профиль -->
+                <div class="flex items-center gap-3">
+                    {% if current_user.is_authenticated %}
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-sm font-semibold text-slate-800">{{ current_user.full_name }}</div>
+                                <div class="text-xs text-slate-500">
+                                    {% if current_user.role == 'volunteer' %}
+                                        Волонтёр ({{ current_user.total_hours }} ч.)
+                                    {% elif current_user.role == 'coordinator' %}
+                                        Координатор НКО
+                                    {% else %}
+                                        Администратор
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <a href="{{ url_for('auth.logout') }}" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 rounded-lg transition">
+                                Выйти
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-2">
+                            Вход
+                        </a>
+                        <a href="{{ url_for('auth.register') }}" class="text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl shadow-sm transition">
+                            Присоединиться
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Сообщения -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 mb-3 rounded-xl text-sm flex items-center justify-between shadow-sm 
+                        {% if category == 'success' %} bg-emerald-50 text-emerald-800 border border-emerald-200
+                        {% elif category == 'danger' %} bg-rose-50 text-rose-800 border border-rose-200
+                        {% elif category == 'warning' %} bg-amber-50 text-amber-800 border border-amber-200
+                        {% else %} bg-sky-50 text-sky-800 border border-sky-200 {% endif %}">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Основной контент -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Подвал -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8 text-sm text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700">ДоброДело</span>
+                <span>— Платформа регионального центра поддержки добровольчества</span>
+            </div>
+            <div class="flex gap-6 text-xs text-slate-400">
+                <span>Соответствие 152-ФЗ (Защита ПДн)</span>
+                <span>Защита несовершеннолетних</span>
+                <span>Регламент MoSCoW MVP</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

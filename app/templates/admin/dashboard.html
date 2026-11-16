@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Панель модератора · ДоброДело{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-purple-900 text-white rounded-2xl p-6 mb-8 flex justify-between items-center shadow-lg">
+        <div>
+            <span class="text-xs font-bold text-purple-300 uppercase tracking-widest">Административный контур</span>
+            <h1 class="text-2xl font-bold mt-1">Модерация организаций платформы (FR-37)</h1>
+            <p class="text-xs text-purple-200 mt-1">Красная линия регламента: организации публикуют проекты только после верификации</p>
+        </div>
+        <div class="text-right">
+            <span class="text-xs bg-purple-800 text-purple-200 px-3 py-1.5 rounded-full font-medium">
+                Пользователей в системе: {{ stats.total_users }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Заявки организаций на проверку -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-amber-50/40">
+            <div>
+                <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-hourglass-half text-amber-500"></i> Требуют проверки модератором
+                </h2>
+                <span class="text-xs text-slate-500">Организации не могут принимать волонтёров до одобрения</span>
+            </div>
+            <span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">{{ pending_orgs|length }}</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="py-3.5 px-6">Название организации</th>
+                        <th class="py-3.5 px-4">Город</th>
+                        <th class="py-3.5 px-4">Контакты</th>
+                        <th class="py-3.5 px-4">Дата заявки</th>
+                        <th class="py-3.5 px-6 text-right">Действие</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for org in pending_orgs %}
+                        <tr>
+                            <td class="py-4 px-6 font-bold text-slate-800">{{ org.name }}</td>
+                            <td class="py-4 px-4 text-xs text-slate-600">{{ org.city }}</td>
+                            <td class="py-4 px-4 text-xs text-slate-600">
+                                <div>{{ org.contact_email }}</div>
+                                <div class="text-slate-400">{{ org.contact_phone }}</div>
+                            </td>
+                            <td class="py-4 px-4 text-xs text-slate-500">{{ org.created_at.strftime('%d.%m.%Y') }}</td>
+                            <td class="py-4 px-6 text-right">
+                                <form method="POST" action="{{ url_for('admin.verify_organization', org_id=org.id) }}" class="inline-block">
+                                    <button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                                        Верифицировать
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
+                                Нет новых организаций, ожидающих модерации. Все заявки проверены.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Верифицированные организации -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100">
+            <h2 class="text-base font-bold text-slate-900">Действующие подтвержденные организации</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="py-3.5 px-6">Организация</th>
+                        <th class="py-3.5 px-4">Город</th>
+                        <th class="py-3.5 px-4">Проектов</th>
+                        <th class="py-3.5 px-6 text-right">Статус</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for org in verified_orgs %}
+                        <tr>
+                            <td class="py-4 px-6 font-semibold text-slate-800">{{ org.name }}</td>
+                            <td class="py-4 px-4 text-xs text-slate-600">{{ org.city }}</td>
+                            <td class="py-4 px-4 text-xs text-slate-600">{{ org.projects|length }}</td>
+                            <td class="py-4 px-6 text-right">
+                                <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                                    Активна
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
